@@ -146,6 +146,11 @@ void prepare_packing_data(struct packing_data *pdata)
 
 	pdata->oe_size_limit = git_env_ulong("GIT_TEST_OE_SIZE",
 					     1U << OE_SIZE_BITS);
+	pdata->oe_delta_size_limit = git_env_ulong("GIT_TEST_OE_DELTA_SIZE",
+						   1UL << OE_DELTA_SIZE_BITS);
+#ifndef NO_PTHREADS
+	pthread_mutex_init(&pdata->lock, NULL);
+#endif
 }
 
 struct object_entry *packlist_alloc(struct packing_data *pdata,
@@ -160,6 +165,8 @@ struct object_entry *packlist_alloc(struct packing_data *pdata,
 
 		if (!pdata->in_pack_by_idx)
 			REALLOC_ARRAY(pdata->in_pack, pdata->nr_alloc);
+		if (pdata->delta_size)
+			REALLOC_ARRAY(pdata->delta_size, pdata->nr_alloc);
 	}
 
 	new_entry = pdata->objects + pdata->nr_objects++;
